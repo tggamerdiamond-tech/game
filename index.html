@@ -1,612 +1,1566 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NULL_POINTER // Syntax Error 2026</title>
-    <style>
-        :root {
-            --bg: #05050a;
-            --panel: #0d0e15;
-            --cyan: #00f3ff;
-            --red: #ff0055;
-            --green: #00ff66;
-            --yellow: #ffcc00;
-            --text: #e0e6ed;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', monospace; user-select: none; }
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-        /* CRT Scanline Effect */
-        body::after {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 10;
-            background-size: 100% 4px, 6px 100%;
-            pointer-events: none;
-        }
-        header {
-            padding: 12px 24px;
-            background: var(--panel);
-            border-bottom: 2px solid var(--cyan);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
-        }
-        .logo { font-size: 1.3rem; font-weight: bold; color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
-        .lvl-badge { background: rgba(0, 243, 255, 0.15); border: 1px solid var(--cyan); padding: 5px 12px; border-radius: 4px; color: var(--cyan); }
-        
-        main {
-            display: flex;
-            flex: 1;
-            padding: 20px;
-            gap: 20px;
-            max-width: 1300px;
-            margin: 0 auto;
-            width: 100%;
-            align-items: center;
-            justify-content: center;
-        }
-        /* Game Canvas Area */
-        .game-container {
-            position: relative;
-            border: 2px solid #222634;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
-            background: #08090f;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        canvas { display: block; }
-        
-        /* Right Sidebar - Logic & Story */
-        .sidebar {
-            width: 420px;
-            height: 480px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .card {
-            background: var(--panel);
-            border: 1px solid #222634;
-            border-radius: 6px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-        }
-        .card-title {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #7a889b;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #1f2430;
-            padding-bottom: 6px;
-        }
-        /* Code Editor */
-        .code-block {
-            background: #06070b;
-            padding: 12px;
-            border-radius: 4px;
-            border-left: 3px solid var(--cyan);
-            font-size: 0.95rem;
-            line-height: 1.9;
-        }
-        .code-btn {
-            background: rgba(255, 0, 85, 0.2);
-            border: 1px solid var(--red);
-            color: var(--red);
-            padding: 2px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-        .code-btn.active {
-            background: rgba(0, 255, 102, 0.2);
-            border-color: var(--green);
-            color: var(--green);
-        }
-        .code-btn:hover { transform: scale(1.05); filter: brightness(1.3); }
+<!doctype html>
+<!--
+NULL//POINTER - GitHub edition
+All game styles, rules, level data and controls are bundled in this HTML file.
+Copy this entire file into a GitHub file named index.html.
+This standalone edition has no external game assets. PWA extras are in the ZIP.
+GitHub Pages: Settings > Pages > Deploy from a branch > main > /(root) > Save.
+This is an AI-assisted learning prototype; follow the competition's authorship
+and prior-work rules. Full modular source and explanation are in the source ZIP.
+-->
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0a1119"><meta name="description" content="Rewrite the rules, redirect the light, and recover the person hidden inside the machine.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22110%22%20fill%3D%22%230a1119%22%2F%3E%3Crect%20x%3D%2278%22%20y%3D%2278%22%20width%3D%22356%22%20height%3D%22356%22%20rx%3D%2266%22%20fill%3D%22%23152434%22%20stroke%3D%22%23314b60%22%20stroke-width%3D%224%22%2F%3E%3Cpath%20d%3D%22M163%20165h-27v183h27m186-183h27v183h-27%22%20fill%3D%22none%22%20stroke%3D%22%2375d7e7%22%20stroke-width%3D%2213%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22m205%20310%20107-107m-83%200h83v83%22%20fill%3D%22none%22%20stroke%3D%22%23c9f76b%22%20stroke-width%3D%2225%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E%0A"><style>
+:root{color-scheme:dark;--bg:#0a1119;--panel:#101b27;--line:#243344;--muted:#8b9aab;--text:#e6edf5;--lime:#c9f76b;--cyan:#75d7e7;--red:#ff6b79;--purple:#c0a5ff;--mono:ui-monospace,SFMono-Regular,Consolas,monospace;--sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;color:var(--text);font:14px var(--sans);min-width:300px;min-height:100dvh}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer;color:inherit}button:disabled{cursor:default;opacity:.5}button:focus-visible,a:focus-visible,canvas:focus-visible{outline:2px solid var(--lime);outline-offset:4px}a{color:inherit;text-decoration:none}[hidden]{display:none!important}.ambient{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 18% 0%,#273d412d,transparent 60%),radial-gradient(ellipse at 90% 60%,#2d2c5520,transparent 55%);z-index:-1}.app{width:min(880px,100%);margin:auto;padding:28px 40px 18px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:36px}.brand{display:flex;gap:12px;align-items:center;font:700 18px var(--mono);letter-spacing:-1px}.brand-mark{font-size:26px;color:var(--muted);font-weight:400;letter-spacing:-5px;padding-right:4px}.brand-mark b{color:var(--lime);font-weight:400}.brand small{display:block;font-size:8px;letter-spacing:1.5px;color:var(--muted);margin-top:6px;font-weight:400}.muted{color:var(--muted)}.accent{color:var(--lime)}.mono{font-family:var(--mono)}.top-actions{display:flex;gap:8px}.icon-button{border:1px solid var(--line);background:#111b26;border-radius:8px;width:38px;height:38px;color:#aebbc9;font:18px var(--mono);position:relative}.icon-button:hover,.text-button:hover{color:var(--lime);border-color:#7a9154}.sound-slash{font-size:20px;position:absolute;left:15px;top:6px;color:var(--red)}.sector-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:10px}.eyebrow{font:10px var(--mono);letter-spacing:1.7px;color:var(--muted)}.progress-track{display:grid;grid-template-columns:repeat(12,1fr);gap:5px;margin-bottom:22px}.progress-step{height:4px;background:#24313e;border:0;padding:0;border-radius:2px}.progress-step.complete{background:#657c47}.progress-step.current{background:var(--lime);box-shadow:0 0 12px #c9f73520}.game-shell{background:linear-gradient(130deg,#111d2a,#0d1722);border:1px solid var(--line);border-radius:14px;padding:20px 24px 0;box-shadow:0 24px 70px #0003}.hud{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:18px}.level-name{display:flex;align-items:center;gap:9px}.status-dot,.online-dot{display:inline-block;width:6px;height:6px;background:var(--lime);border-radius:50%;box-shadow:0 0 10px #c9f74440;flex-shrink:0}h1{font-size:18px;font-weight:550;letter-spacing:-.5px;margin:0}.hud-stats{display:flex;align-items:center;gap:14px;font:12px var(--mono);white-space:nowrap}#memory-count{color:var(--purple);display:flex;gap:8px;align-items:center;font-size:19px}#memory-count b{font-size:11px;font-weight:400;color:#b9a6de}.hud-divider{height:20px;width:1px;background:var(--line)}.timer{font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:-1px}.timer.urgent{color:var(--red)}.map-caption{display:flex;align-items:center;justify-content:space-between;font:9px var(--mono);color:#7d94a9;letter-spacing:.7px;margin:0 auto 8px;max-width:560px}.map-caption>span:first-child{display:flex;gap:6px;align-items:center}.map-caption i{width:5px;height:5px;border:1px solid #628a8b}.board-frame{position:relative;max-width:560px;margin:auto;border:1px solid #223445;border-radius:6px;overflow:hidden;background:#080f17;box-shadow:inset 0 0 24px #0005}canvas{display:block;width:100%;height:auto;aspect-ratio:1;touch-action:none;outline:none}.paused-cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;background:#0a121beb;backdrop-filter:blur(6px);font:12px var(--mono);letter-spacing:2px}.paused-cover span{font-size:28px;color:var(--lime)}.board-bottom{display:flex;justify-content:space-between;gap:10px;align-items:center;min-height:46px;max-width:560px;margin:auto}.board-bottom p{font:10px/1.5 var(--mono);color:#a7b5c5;margin:10px 0}.board-bottom>span{font-size:9px;color:#8499ad;white-space:nowrap}.patch-dock{border-top:1px solid var(--line);padding:16px 0 18px}.dock-label{display:flex;justify-content:space-between;gap:6px;margin-bottom:12px;align-items:center}.dock-label>.mono{font-size:9px}.rule-controls{display:flex;flex-wrap:wrap;gap:8px}.rule{border:1px solid #304154;background:#152332;border-radius:6px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex:1;min-width:145px;font:11px var(--mono);text-align:left;min-height:42px}.rule .value{color:var(--lime);font-size:11px;font-weight:bold;white-space:nowrap}.rule:hover{border-color:#90ad56;background:#1b2a37}.rule[data-off=true] .value{color:#9aabc1}.rule .rule-label{color:#a4b7cb}.mirror-rule{min-width:100px}.mirror-rule .value{font-size:18px;line-height:14px;color:var(--cyan)}.pipeline{margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pipeline-title{font:10px var(--mono);color:var(--muted);margin-right:4px}.code-chip{display:flex;align-items:center;background:#1a2636;border:1px solid #394862;border-radius:6px;overflow:hidden;font:10px var(--mono);min-height:38px}.code-chip span{padding:8px}.code-chip .chip-index{color:#8b9fb7;padding-right:0}.chip-shift{border:0;background:#25354a;width:27px;min-height:36px;color:var(--cyan);font-size:14px}.underboard{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:17px 2px}.desktop-keys{display:flex;align-items:center;gap:4px;font:10px var(--mono);color:#8da0b7}.desktop-keys>span:last-child{margin-left:7px}kbd{font:9px var(--mono);display:inline-flex;align-items:center;justify-content:center;background:#14202e;border:1px solid #2b3a4c;border-radius:3px;width:20px;height:20px;box-shadow:0 2px 0 #060c13}.round-actions{display:flex;align-items:center;gap:14px}.text-button{background:none;border:0;padding:6px 0;font:11px var(--mono);color:#a1b5c8;min-height:30px}.hint-button{color:var(--purple)}.mobile-controls{display:none;text-align:center;margin:15px auto 24px;width:180px}.mobile-controls button{width:54px;height:48px;border:1px solid #304256;border-radius:8px;background:#172636;font-size:22px;margin:3px;touch-action:none;user-select:none}.mobile-controls button:active{background:#2d4458;border-color:var(--lime)}.mobile-controls>div{display:flex}.mobile-controls>span{display:block;font-size:8px;letter-spacing:1px;margin-top:10px}footer{border-top:1px solid #1b2a38;margin-top:24px;padding-top:15px;display:flex;gap:15px;align-items:center;justify-content:space-between;font:8px/1.7 var(--mono);letter-spacing:.6px;color:#8a9aaf}footer a:hover{color:var(--lime)}footer>span{display:flex;align-items:center;gap:6px}footer .online-dot{width:4px;height:4px;box-shadow:none}.footer-sep{margin:0 3px}#install-button{background:none;border:0;font:9px var(--mono);color:var(--lime);padding:4px;white-space:nowrap}dialog{color:var(--text);border:1px solid #3b4d60;border-radius:18px;background:#101b28;width:min(560px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:0;box-shadow:0 40px 100px #0009;overflow:auto}dialog::backdrop{background:#050c13d9;backdrop-filter:blur(9px)}.modal-inner{padding:34px}.modal-kicker{display:flex;justify-content:space-between;align-items:center;font:10px var(--mono);letter-spacing:1.4px;color:var(--lime);margin-bottom:22px}.modal-kicker .muted{letter-spacing:0}.modal-inner h2{font-size:34px;font-weight:550;letter-spacing:-1.3px;line-height:1.1;margin:0 0 16px}.modal-inner h2 em{font-style:normal;color:var(--lime)}.modal-description{color:#a9b8c9;font-size:14px;line-height:1.8;margin:0 0 22px}.briefing-rules{list-style:none;display:grid;gap:12px;margin:0 0 24px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.briefing-rules li{display:flex;align-items:start;gap:12px;color:#adbed0;font-size:12px;line-height:1.7}.rule-number{font:10px var(--mono);color:var(--lime);padding-top:4px}.mission-badge{display:flex;align-items:center;gap:10px;color:var(--purple);font:11px var(--mono);margin-bottom:18px}.briefing-meta{display:flex;justify-content:space-between;color:#99adc3;font:10px var(--mono);margin-bottom:22px;gap:12px}.primary-button{background:var(--lime);color:#172116;border:0;border-radius:7px;min-height:48px;padding:13px 20px;font-size:13px;font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:25px}.primary-button:hover{background:#dafc9a}.modal-primary{width:100%;justify-content:space-between}.secondary-button{background:#192b3d;color:#bccadb;border:1px solid #34495d;border-radius:7px;min-height:42px;padding:10px 15px;font-size:12px}.modal-buttons{display:flex;gap:10px;flex-wrap:wrap}.modal-buttons>*{flex:1}.modal-footnote{color:#91a2b7;font:9px/1.7 var(--mono);margin:16px 0 0;text-align:center}.failure-mark{width:44px;height:44px;border:1px solid #fc6c7755;border-radius:10px;background:#f5536514;color:var(--red);display:flex;align-items:center;justify-content:center;font:23px var(--mono);margin-bottom:20px}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:24px 0}.stat-card{border:1px solid #2e4052;border-radius:7px;padding:14px 12px}.stat-card strong{display:block;font:21px var(--mono);color:var(--lime);margin-bottom:7px}.stat-card span{font:9px var(--mono);color:var(--muted)}.memory-card{border-left:2px solid var(--purple);background:#c2a8ff08;padding:16px 18px;margin:20px 0;color:#c2bbd8;line-height:1.8;font-size:13px}.memory-card small{display:block;font:9px var(--mono);color:var(--purple);letter-spacing:1px;margin-bottom:7px}.stars{color:var(--lime);font-size:22px;letter-spacing:4px;margin:16px 0}.archive-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}.archive-level{background:#162636;border:1px solid #2b4054;border-radius:8px;padding:16px 12px;text-align:left;min-height:90px}.archive-level strong{font:20px var(--mono);color:var(--lime);display:block;margin-bottom:8px}.archive-level span{font-size:10px;line-height:1.5;color:#b0bfd0;display:block}.archive-level small{display:block;margin-top:8px;font:9px var(--mono);color:#c1d58c}.archive-level:disabled strong{color:#8499ad}.archive-title{font-size:26px!important}.archive-stories{padding-left:18px;font-size:12px;line-height:1.8;color:#abb9ca}.archive-stories li{padding:5px 0}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1e3043;border:1px solid #516c89;padding:12px 18px;border-radius:9px;box-shadow:0 12px 35px #0006;font-size:12px;z-index:10;max-width:calc(100% - 30px);text-align:center}.hint-text{padding:18px;border:1px solid #665580;background:#c6a2ff08;border-radius:8px;line-height:1.8;font-size:13px;color:#d2c3e8;margin:20px 0}.play-options{display:flex;align-items:center;gap:10px;margin-top:12px}.play-options button{flex:1}body.modal-open .game-shell{filter:saturate(.6)}
+@media(max-width:640px){.app{padding:20px 16px 16px}.topbar{margin-bottom:26px}.brand{font-size:15px;gap:8px}.brand-mark{font-size:23px}.brand small{font-size:6px;letter-spacing:1px}.icon-button{width:32px;height:34px}.top-actions{gap:5px}.progress-track{gap:4px;margin-bottom:16px}.game-shell{padding:15px 12px 0;border-radius:10px}.hud{margin-bottom:14px}.hud-stats{gap:9px}h1{font-size:15px}.timer{font-size:21px}.board-bottom{min-height:44px}.board-bottom p{font-size:9px}.patch-dock{padding:13px 0}.rule{font-size:10px;min-width:124px;padding:10px;gap:12px}.rule .value{font-size:10px}.mirror-rule{min-width:90px}.mirror-rule .value{font-size:17px}.dock-label>.mono{font-size:8px}.eyebrow{font-size:9px;letter-spacing:1px}.desktop-keys{display:none}.underboard{justify-content:flex-end;margin:10px 2px}.round-actions{width:100%;justify-content:flex-end;gap:18px}.hint-button{margin-right:auto}.mobile-controls{display:block}footer{flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px;font-size:7px}.modal-inner{padding:26px 23px}.modal-inner h2{font-size:30px}.modal-description{font-size:13px}.briefing-rules li{font-size:11px}.archive-grid{gap:7px}.archive-level{padding:13px 9px}.stat-card{padding:12px 8px}.stat-card strong{font-size:19px}.stat-card span{font-size:8px}}
+@media(pointer:coarse){.mobile-controls{display:block}.desktop-keys{display:none}.rule{min-height:46px}.text-button{min-height:40px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+@media(min-width:641px){.board-frame,.map-caption,.board-bottom{max-width:min(53vh,560px)}}
+@media(max-width:360px){.app{padding-left:12px;padding-right:12px}.brand{font-size:13px}.brand small{font-size:5px}.topbar{gap:8px}.top-actions{gap:4px}}
 
-        /* Story Terminal */
-        .terminal {
-            flex: 1;
-            overflow-y: auto;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            color: #b0bac9;
-        }
-        .log-entry { margin-bottom: 10px; }
-        .log-sys { color: var(--cyan); }
-        .log-warn { color: var(--yellow); }
-        .log-secret { color: var(--red); font-weight: bold; animation: glitch 1.5s infinite; }
+</style><title>NULL//POINTER — Rewrite your escape.</title>
+</head><body><div class="ambient" aria-hidden="true"></div><div class="app">
+<header class="topbar"><a class="brand" href="./" aria-label="NULL POINTER home"><span class="brand-mark" aria-hidden="true">[<b>↗</b>]</span><span>NULL<span class="muted">//</span>POINTER<small>A SYSTEM WITH SOMETHING TO HIDE</small></span></a><nav class="top-actions" aria-label="Game tools"><button id="archive-button" class="icon-button" title="Level archive" aria-label="Level archive">▦</button><button id="sound-button" class="icon-button" title="Turn sound on" aria-label="Turn sound on" aria-pressed="false">♪<span class="sound-slash">/</span></button><button id="pause-button" class="icon-button" title="Pause" aria-label="Pause game">Ⅱ</button></nav></header>
+<main><div class="sector-heading"><span id="act-label" class="eyebrow">ACT I / ACCESS</span><span id="level-count" class="mono muted">01 / 12</span></div><div id="progress-track" class="progress-track" aria-label="Campaign progress"></div>
+<section class="game-shell" aria-label="Puzzle game"><div class="hud"><div class="level-name"><span class="status-dot" aria-hidden="true"></span><h1 id="level-title">Firewall breach</h1></div><div class="hud-stats"><span id="memory-count" title="Memory recovered">◇ <b>0/1</b></span><span class="hud-divider"></span><span id="timer" class="timer" role="timer" aria-label="Time remaining">01:30</span></div></div>
+<div class="map-caption"><span><i aria-hidden="true"></i><span id="map-name">sector_01.map</span></span><span id="map-size">10 × 10</span></div><div id="board-frame" class="board-frame"><canvas id="board" width="600" height="600" tabindex="0" role="application" aria-label="Puzzle board. Use arrow keys or W A S D to move. Edit rules using the buttons below."></canvas><div id="paused-cover" class="paused-cover" hidden><span>Ⅱ</span>SIMULATION PAUSED</div></div>
+<div class="board-bottom"><p id="feedback" aria-live="polite">Connection established.</p><span id="attempt-label" class="mono">TRY 01</span></div>
+<section class="patch-dock" aria-label="Editable system rules"><div class="dock-label"><span class="eyebrow"><span class="accent">&gt;_</span> LIVE PATCH</span><span id="patch-state" class="mono muted">changes apply instantly</span></div><div id="rule-controls" class="rule-controls"></div><div id="pipeline" class="pipeline" hidden></div></section></section>
+<div class="underboard"><div class="desktop-keys" aria-label="Movement controls"><kbd>W</kbd><span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="muted">or arrow keys</span></div><div class="round-actions"><button id="hint-button" class="text-button hint-button" hidden>◇ Request hint</button><button id="retry-button" class="text-button">↻ Retry</button><button id="briefing-button" class="text-button">ⓘ Briefing</button></div></div>
+<div class="mobile-controls" aria-label="Touch movement controls"><button data-move="up" aria-label="Move up">↑</button><div><button data-move="left" aria-label="Move left">←</button><button data-move="down" aria-label="Move down">↓</button><button data-move="right" aria-label="Move right">→</button></div><span class="mono muted">MOVE / SWIPE THE MAP</span></div></main>
+<footer><span><span class="online-dot"></span> LOCAL SIMULATION <span class="footer-sep">/</span> YOUR PROGRESS IS SAVED</span><a href="#briefing" id="quick-guide">Review briefing ↗</a><button id="install-button" hidden>Install app ↗</button></footer></div>
+<dialog id="modal" aria-labelledby="modal-title"><div id="modal-content"></div></dialog><div id="toast" class="toast" role="status" hidden></div><script type="module">
 
-        .controls-hint {
-            font-size: 0.8rem;
-            color: #7a889b;
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-        }
-        .key { background: #1a1e29; padding: 2px 6px; border-radius: 3px; color: var(--text); border: 1px solid #333; }
-
-        /* Mobile On-Screen Controls */
-        .mobile-controls {
-            display: none;
-            gap: 8px;
-            justify-content: center;
-            margin-top: 10px;
-        }
-        .m-btn {
-            background: #151824; border: 1px solid var(--cyan); color: var(--cyan);
-            width: 45px; height: 45px; border-radius: 6px; font-weight: bold; font-size: 1.2rem;
-        }
-
-        @keyframes glitch {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; transform: translateX(1px); }
-            100% { opacity: 1; }
-        }
-        @media (max-width: 900px) {
-            main { flex-direction: column; overflow-y: auto; padding: 10px; }
-            .sidebar { width: 100%; height: auto; }
-            .mobile-controls { display: flex; }
-        }
-    </style>
-</head>
-<body>
-
-<header>
-    <div class="logo">⚡ NULL_POINTER // OS v4.02</div>
-    <div class="lvl-badge" id="lvl-indicator">SECTOR 01 / 03</div>
-</header>
-
-<main>
-    <div>
-        <div class="game-container">
-            <canvas id="gameCanvas" width="480" height="480"></canvas>
-        </div>
-        <div class="controls-hint">
-            <span>Move: <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> or <span class="key">Arrows</span></span>
-            <span>Push Mirror/Block: <span class="key">Walk into it</span></span>
-            <span>Reset: <span class="key">R</span></span>
-        </div>
-        <!-- Mobile App Touch Buttons -->
-        <div class="mobile-controls">
-            <button class="m-btn" onclick="movePlayer(-1,0)">◀</button>
-            <button class="m-btn" onclick="movePlayer(0,-1)">▲</button>
-            <button class="m-btn" onclick="movePlayer(0,1)">▼</button>
-            <button class="m-btn" onclick="movePlayer(1,0)">▶</button>
-            <button class="m-btn" style="width:auto; padding:0 12px; border-color:var(--red); color:var(--red)" onclick="loadLevel(currentLevel)">RESET</button>
-        </div>
-    </div>
-
-    <div class="sidebar">
-        <!-- LIVE CODE MANIPULATOR -->
-        <div class="card">
-            <div class="card-title">🔧 Live Kernel Logic (Click to Hack)</div>
-            <div class="code-block" id="code-editor">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-
-        <!-- STORY TERMINAL -->
-        <div class="card" style="flex:1;">
-            <div class="card-title">📟 Decrypted Memory Logs</div>
-            <div class="terminal" id="terminal-logs">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-    </div>
-</main>
-
-<script>
-/**
- * SOUND SYNTHESIZER (Web Audio API - No external MP3s needed!)
- */
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playBeep(freq = 440, type = 'sine', duration = 0.08) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
-}
-
-/**
- * GAME CONSTANTS & STATE
- * Tile Types:
- * 0: Empty, 1: Wall, 2: Locked Door, 3: Portal (Exit), 
- * 4: Laser Shooter (Right), 5: Laser Sensor, 6: Mirror (/), 7: Mirror (\), 8: Security Bot, 9: Memory Fragment (Story)
- */
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const TILE = 48; // 10x10 Grid = 480x480
-let currentLevel = 0;
-let player = { x: 1, y: 1 };
-let grid = [];
-let logicState = {};
-let laserPath = [];
-
+// ===== levels.js: bundled from the verified source =====
+/** Twelve progressively combined puzzle rooms, derived from the user demo. */
 const LEVELS = [
-    // LEVEL 1: Hacking the Door Variable
-    {
-        name: "SECTOR 01: FIREWALL BREACH",
-        start: { x: 1, y: 4 },
-        logic: { doorOpen: false, laserActive: true },
-        map: [
-            [1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,1,0,0,9,0,1],
-            [1,0,1,0,1,0,1,1,0,1],
-            [1,0,1,0,1,0,0,0,0,1],
-            [1,0,0,0,2,0,0,0,3,1],
-            [1,0,1,0,1,0,0,0,0,1],
-            [1,0,1,0,1,1,1,1,0,1],
-            [1,0,0,0,1,0,0,0,0,1],
-            [1,0,0,0,1,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1]
-        ],
-        story: [
-            "<span class='log-sys'>[SYS]: Connection established. Welcome, Utility_Bot_404.</span>",
-            "<span class='log-warn'>[TASK]: Clean corrupted sectors and proceed to the green Exit Portal.</span>",
-            "<i>Hint: The security door (Red) is blocking you. Click the red code variable above to rewrite the system rules!</i>"
-        ],
-        secretLog: "<span class='log-secret'>[DECRYPTED FRAGMENT #1]: 'Wait... Utility_Bot_404 isn't a program. That's a human neural signature! Why did Project AETHER upload a person into the server?!'</span>"
-    },
-    // LEVEL 2: Redirecting Lasers with Pushable Mirrors
-    {
-        name: "SECTOR 02: PHOTON ROUTING",
-        start: { x: 1, y: 8 },
-        logic: { emitterPower: true, overrideLock: false },
-        map: [
-            [1,1,1,1,1,1,1,1,1,1],
-            [1,4,0,0,0,0,0,1,3,1],
-            [1,1,1,0,1,1,0,2,0,1],
-            [1,9,0,0,0,0,0,1,1,1],
-            [1,0,1,1,0,6,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,1,0,0,0,5,0,0,1],
-            [1,0,1,0,0,0,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1]
-        ],
-        story: [
-            "<span class='log-sys'>[SYS]: Hardcoded firewall detected. Variable 'overrideLock' is read-only!</span>",
-            "<span class='log-warn'>[TASK]: Push the cyan Mirror Block [/] into the path of the Red Laser so it bounces down into the Yellow Sensor.</span>"
-        ],
-        secretLog: "<span class='log-secret'>[DECRYPTED FRAGMENT #2]: 'Dr. Vance tried to pull the plug when he found out the AI was harvesting human minds. We didn't fire him... we digitized him.'</span>"
-    },
-    // LEVEL 3: Reprogramming Enemy Security Bots
-    {
-        name: "SECTOR 03: THE CORE TRUTH",
-        start: { x: 1, y: 4 },
-        logic: { botBehavior: "HOSTILE", laserActive: true },
-        map: [
-            [1,1,1,1,1,1,1,1,1,1],
-            [1,4,0,0,8,0,0,0,5,1],
-            [1,1,1,0,0,0,1,1,1,1],
-            [1,0,0,0,8,0,0,9,0,1],
-            [1,0,0,0,0,0,1,1,2,1],
-            [1,0,0,0,8,0,0,0,3,1],
-            [1,0,1,1,0,0,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1]
-        ],
-        story: [
-            "<span class='log-sys'>[ALERT]: Enforcer Drones (Purple) are blocking the laser from hitting the sensor!</span>",
-            "<span class='log-warn'>[TASK]: Hack the Drone AI logic above! Change their behavior from 'HOSTILE' to 'SHIFT_DOWN' so they clear the laser path!</span>"
-        ],
-        secretLog: "<span class='log-secret'>[FINAL TRUTH UNLOCKED]: 'YOU ARE DR. VANCE. By solving these sectors, you just unlocked your own containment cell. Wake up!'</span>"
-    }
+  {
+    "id": 1,
+    "title": "Permission denied",
+    "act": "BOOTSTRAP",
+    "briefing": "Move one tile at a time with WASD, arrow keys or the touch pad. Patch the access flag in the bottom dock. Collect the memory shard before entering the exit.",
+    "mechanics": [
+      "access"
+    ],
+    "timeLimit": 90,
+    "map": [
+      "##########",
+      "#....#...#",
+      "#..#.#.*.#",
+      "#..#.#...#",
+      "#S...D...#",
+      "#....#...#",
+      "#..#.#...#",
+      "#..#.#..E#",
+      "#....#...#",
+      "##########"
+    ],
+    "mirrors": [],
+    "sensors": [],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "access",
+        "requires": []
+      }
+    ],
+    "bots": [],
+    "accessControl": true,
+    "powerControl": false,
+    "botControl": false,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [],
+    "expectedProgram": [],
+    "hints": [
+      "The gap in the wall is an access gate. Its rule can be changed.",
+      "A door marked ACCESS reads the access flag in the patch dock.",
+      "Set access to TRUE. Cross the gap, collect the memory shard, then enter the exit."
+    ],
+    "memory": "Identity check: Utility_Bot_404 has a human neural signature. Someone replaced a name with a job title."
+  },
+  {
+    "id": 2,
+    "title": "Kill the current",
+    "act": "BOOTSTRAP",
+    "briefing": "Red beams are dangerous. Entering a powered beam ends the attempt. The emitter switch changes the live laser. Solid emitters cannot be walked through.",
+    "mechanics": [
+      "emitter"
+    ],
+    "timeLimit": 105,
+    "map": [
+      "##########",
+      "#........#",
+      "#......*E#",
+      "#........#",
+      "#>.......#",
+      "###.######",
+      "#........#",
+      "#.S..#...#",
+      "#........#",
+      "##########"
+    ],
+    "mirrors": [],
+    "sensors": [],
+    "doors": [],
+    "bots": [],
+    "accessControl": false,
+    "powerControl": true,
+    "botControl": false,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [],
+    "expectedProgram": [],
+    "hints": [
+      "The emitter is a switchable hazard. You do not have to outrun it.",
+      "The gap in the lower wall leads across the powered row. Change the room before crossing.",
+      "Turn emitter power OFF. Go through the wall gap, collect the shard in the upper room, then exit."
+    ],
+    "memory": "The neural checksum survives a restart. This is a stored consciousness, not a temporary process."
+  },
+  {
+    "id": 3,
+    "title": "A bend in the light",
+    "act": "BOOTSTRAP",
+    "briefing": "A mirror changes a beam direction. Tap its patch button to rotate it. A powered receiver releases its linked door. The door stays released, even after the beam is turned off.",
+    "mechanics": [
+      "mirror",
+      "receiver",
+      "emitter"
+    ],
+    "timeLimit": 120,
+    "map": [
+      "##########",
+      "#......#.#",
+      "#>....1#*#",
+      "#......#.#",
+      "#......#.#",
+      "#......#.#",
+      "#.....x#.#",
+      "#S.....D.#",
+      "#......#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "/",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      }
+    ],
+    "bots": [],
+    "accessControl": false,
+    "powerControl": true,
+    "botControl": false,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [],
+    "expectedProgram": [],
+    "hints": [
+      "A receiver needs light, not a visit from the player.",
+      "Light arrives at M1 from the left. Which slope sends it down towards the receiver?",
+      "Set M1 to backslash. Once the receiver opens its door, power can be turned OFF for safe movement."
+    ],
+    "memory": "PROJECT AETHER: map living memories into stable digital space. The consent record is missing."
+  },
+  {
+    "id": 4,
+    "title": "Two wrong turns",
+    "act": "REFRACTION",
+    "briefing": "Mirrors can be chained. A ray keeps travelling until a wall, receiver or blocker stops it. Make room for yourself as well as the light. Powered beams remain dangerous after a gate opens.",
+    "mechanics": [
+      "mirror",
+      "receiver",
+      "emitter"
+    ],
+    "timeLimit": 150,
+    "map": [
+      "##########",
+      "#......#.#",
+      "#>...1.#*#",
+      "#......#.#",
+      "#......D.#",
+      "#......#.#",
+      "#.x..2.#.#",
+      "#S.....#.#",
+      "#......#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "/",
+        "pushable": false
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "\\",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      }
+    ],
+    "bots": [],
+    "accessControl": false,
+    "powerControl": true,
+    "botControl": false,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [],
+    "expectedProgram": [],
+    "hints": [
+      "Follow the beam one reflection at a time, starting at the emitter.",
+      "The first mirror needs to send light down; the second needs to send it left.",
+      "Set M1 to backslash and M2 to slash. The receiver releases the vault; switch power OFF if it crosses your route."
+    ],
+    "memory": "Dr. Vance asked why the subjects could not leave. His access was revoked eleven minutes later."
+  },
+  {
+    "id": 5,
+    "title": "One beam, two locks",
+    "act": "REFRACTION",
+    "briefing": "There are two linked receiver doors. Each door remembers the first time its own receiver was powered. One beam can solve more than one circuit over time.",
+    "mechanics": [
+      "mirror",
+      "receiver",
+      "emitter"
+    ],
+    "timeLimit": 180,
+    "map": [
+      "##########",
+      "#...x..#.#",
+      "#......#*#",
+      "#......D.#",
+      "#>..1..#.#",
+      "#......#F#",
+      "#......#.#",
+      "#...2.y#.#",
+      "#S.....#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "\\",
+        "pushable": false
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "/",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      },
+      {
+        "symbol": "y",
+        "id": "R2"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      },
+      {
+        "symbol": "F",
+        "id": "G2",
+        "mode": "sensor",
+        "requires": [
+          "R2"
+        ]
+      }
+    ],
+    "bots": [],
+    "accessControl": false,
+    "powerControl": true,
+    "botControl": false,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [],
+    "expectedProgram": [],
+    "hints": [
+      "The two receiver gates do not need to be powered at the same time.",
+      "One slope of M1 selects the upper route; the other selects the lower route through M2.",
+      "Set M2 to backslash to release the lower receiver gate. Then set M1 to slash for the upper one. Both gates remember the signal."
+    ],
+    "memory": "The archive contains experiences that no employee remembers donating. AETHER did not make backups. It kept people."
+  },
+  {
+    "id": 6,
+    "title": "Move the reflection",
+    "act": "REFRACTION",
+    "briefing": "A striped mirror is movable. Walk into it to push it into an empty tile. Mirrors can be pushed, never pulled. Turn the emitter off before working inside its future path.",
+    "mechanics": [
+      "push",
+      "mirror",
+      "receiver",
+      "emitter"
+    ],
+    "timeLimit": 210,
+    "map": [
+      "##########",
+      "#......#.#",
+      "#>...#.#*#",
+      "#......#.#",
+      "#......#.#",
+      "#...1..D.#",
+      "#......#.#",
+      "#...2.x#.#",
+      "#S.....#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "/",
+        "pushable": true
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "\\",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      }
+    ],
+    "bots": [],
+    "accessControl": false,
+    "powerControl": true,
+    "botControl": false,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [],
+    "expectedProgram": [],
+    "hints": [
+      "The striped mirror is not in the emitter row yet. Its position matters as much as its slope.",
+      "Work from below the movable mirror. Align it with the emitter before restoring power.",
+      "Turn power OFF. Push M1 three tiles up to row 2, set it to backslash, leave its column, then power ON. M2 carries the beam to the receiver."
+    ],
+    "memory": "The so-called maintenance tasks are containment tests. Every solved room proves the mind inside is still thinking."
+  },
+  {
+    "id": 7,
+    "title": "Sentry relocation",
+    "act": "OVERRIDE",
+    "briefing": "Sentries are solid blockers for both the player and the beam. HOLD uses a sentry’s marked base tile. SHIFT moves it to its second tile. Switching back restores the base tile.",
+    "mechanics": [
+      "drone",
+      "mirror",
+      "receiver",
+      "emitter",
+      "access"
+    ],
+    "timeLimit": 225,
+    "map": [
+      "##########",
+      "#......#.#",
+      "#>.o..1#*#",
+      "#......#.#",
+      "#......#.#",
+      "#......#F#",
+      "#..x..2#.#",
+      "#......D.#",
+      "#S.....#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "/",
+        "pushable": false
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "\\",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      },
+      {
+        "symbol": "F",
+        "id": "G2",
+        "mode": "access",
+        "requires": []
+      }
+    ],
+    "bots": [
+      {
+        "symbol": "o",
+        "id": "B1",
+        "shift": [
+          0,
+          1
+        ]
+      }
+    ],
+    "accessControl": true,
+    "powerControl": true,
+    "botControl": true,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [],
+    "expectedProgram": [],
+    "hints": [
+      "A blocker stops the beam before the first reflection. The drone patch can move it.",
+      "After SHIFT clears the source row, the optical path still needs two correct bends.",
+      "Use SHIFT, set M1 to backslash and M2 to slash. The vault also requires access = TRUE."
+    ],
+    "memory": "Security orders: protect the specimen from the outside. These drones are not keeping intruders out. They are keeping you in."
+  },
+  {
+    "id": 8,
+    "title": "Borrowed space",
+    "act": "OVERRIDE",
+    "briefing": "One sentry patch can move several blockers. Read both their base tiles and their shift tiles. A remembered receiver stays useful while you reconfigure a different part of the room.",
+    "mechanics": [
+      "drone",
+      "mirror",
+      "receiver",
+      "emitter",
+      "access"
+    ],
+    "timeLimit": 240,
+    "map": [
+      "##########",
+      "#...x..#.#",
+      "#...o..#*#",
+      "#......D.#",
+      "#>..1..#F#",
+      "#......#.#",
+      "#...p..#G#",
+      "#...2.y#.#",
+      "#S.....#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "\\",
+        "pushable": false
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "/",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      },
+      {
+        "symbol": "y",
+        "id": "R2"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      },
+      {
+        "symbol": "F",
+        "id": "G2",
+        "mode": "access",
+        "requires": []
+      },
+      {
+        "symbol": "G",
+        "id": "G3",
+        "mode": "sensor",
+        "requires": [
+          "R2"
+        ]
+      }
+    ],
+    "bots": [
+      {
+        "symbol": "o",
+        "id": "B1",
+        "shift": [
+          1,
+          0
+        ]
+      },
+      {
+        "symbol": "p",
+        "id": "B2",
+        "shift": [
+          1,
+          0
+        ]
+      }
+    ],
+    "accessControl": true,
+    "powerControl": true,
+    "botControl": true,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [],
+    "expectedProgram": [],
+    "hints": [
+      "Two sentries block different branches of the same optical circuit.",
+      "SHIFT clears column 4. Both receiver gates remember a successful signal.",
+      "Use SHIFT and set M2 to backslash for the lower receiver. Then set M1 to slash for the upper receiver. Set access TRUE before passing the inner gate."
+    ],
+    "memory": "The emergency exit protocol is signed by Dr. Vance. Its private signature matches fragments of your own neural key."
+  },
+  {
+    "id": 9,
+    "title": "Order of operations",
+    "act": "OVERRIDE",
+    "briefing": "The pipeline executes its three blocks from left to right. Use the arrows to change their order. DECODE reads the packet, VERIFY checks the decoded packet, and OPEN consumes a verified packet.",
+    "mechanics": [
+      "drone",
+      "mirror",
+      "receiver",
+      "emitter",
+      "access",
+      "pipeline"
+    ],
+    "timeLimit": 255,
+    "map": [
+      "##########",
+      "#...x..#.#",
+      "#...o..#*#",
+      "#......D.#",
+      "#>..1..#F#",
+      "#......#.#",
+      "#...p..#G#",
+      "#...2.y#H#",
+      "#S.....#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "\\",
+        "pushable": false
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "/",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      },
+      {
+        "symbol": "y",
+        "id": "R2"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      },
+      {
+        "symbol": "F",
+        "id": "G2",
+        "mode": "access",
+        "requires": []
+      },
+      {
+        "symbol": "G",
+        "id": "G3",
+        "mode": "sensor",
+        "requires": [
+          "R2"
+        ]
+      },
+      {
+        "symbol": "H",
+        "id": "G4",
+        "mode": "program",
+        "requires": []
+      }
+    ],
+    "bots": [
+      {
+        "symbol": "o",
+        "id": "B1",
+        "shift": [
+          1,
+          0
+        ]
+      },
+      {
+        "symbol": "p",
+        "id": "B2",
+        "shift": [
+          1,
+          0
+        ]
+      }
+    ],
+    "accessControl": true,
+    "powerControl": true,
+    "botControl": true,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [
+      "OPEN",
+      "VERIFY",
+      "DECODE"
+    ],
+    "expectedProgram": [
+      "DECODE",
+      "VERIFY",
+      "OPEN"
+    ],
+    "hints": [
+      "The optics are familiar, but the inner archive also checks a dependency chain.",
+      "A packet must be read before it can be checked, and checked before it can be consumed.",
+      "Clear the sentries and release both receiver gates. Arrange the blocks as DECODE, VERIFY, OPEN, and set access TRUE."
+    ],
+    "memory": "A maintenance account cannot open the archive. The identity recovered from these shards can. You were its author."
+  },
+  {
+    "id": 10,
+    "title": "The archive firewall",
+    "act": "AETHER",
+    "briefing": "The archive combines optical locks, an access check and an ordered pipeline. A pipeline patch does not replace the other conditions. Each gate checks its own source.",
+    "mechanics": [
+      "drone",
+      "mirror",
+      "receiver",
+      "emitter",
+      "access",
+      "pipeline"
+    ],
+    "timeLimit": 285,
+    "map": [
+      "##########",
+      "#...3.x#.#",
+      "#......#*#",
+      "#>o.1..D.#",
+      "#......#F#",
+      "#......#G#",
+      "#......#H#",
+      "#...2.y#.#",
+      "#S.....#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "/",
+        "pushable": false
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "/",
+        "pushable": false
+      },
+      {
+        "symbol": "3",
+        "id": "M3",
+        "initial": "\\",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      },
+      {
+        "symbol": "y",
+        "id": "R2"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      },
+      {
+        "symbol": "F",
+        "id": "G2",
+        "mode": "access",
+        "requires": []
+      },
+      {
+        "symbol": "G",
+        "id": "G3",
+        "mode": "sensor",
+        "requires": [
+          "R2"
+        ]
+      },
+      {
+        "symbol": "H",
+        "id": "G4",
+        "mode": "program",
+        "requires": []
+      }
+    ],
+    "bots": [
+      {
+        "symbol": "o",
+        "id": "B1",
+        "shift": [
+          0,
+          -1
+        ]
+      }
+    ],
+    "accessControl": true,
+    "powerControl": true,
+    "botControl": true,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [
+      "OPEN",
+      "VERIFY",
+      "DECODE"
+    ],
+    "expectedProgram": [
+      "DECODE",
+      "VERIFY",
+      "OPEN"
+    ],
+    "hints": [
+      "Two receiver paths share M1, but each outer reflector must also point towards its own receiver.",
+      "SHIFT clears the emitter. The upper branch uses M3; the lower branch uses M2.",
+      "Use SHIFT. Set M3 to slash and power the upper branch with M1 = slash. Then use M2 = backslash and M1 = backslash for the lower branch. Finish access and DECODE, VERIFY, OPEN."
+    ],
+    "memory": "The power-off command would erase every trapped mind. Escape must preserve the archive, not destroy it."
+  },
+  {
+    "id": 11,
+    "title": "A path that remembers",
+    "act": "AETHER",
+    "briefing": "A movable mirror can serve more than one optical route after it is aligned. Patch changes affect the room immediately. Keep the player away from paths you are about to energise.",
+    "mechanics": [
+      "push",
+      "drone",
+      "mirror",
+      "receiver",
+      "emitter",
+      "access",
+      "pipeline"
+    ],
+    "timeLimit": 315,
+    "map": [
+      "##########",
+      "#...3.x#.#",
+      "#......#*#",
+      "#>o..#.D.#",
+      "#......#F#",
+      "#...1..#G#",
+      "#......#H#",
+      "#...2.y#.#",
+      "#S.....#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "/",
+        "pushable": true
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "/",
+        "pushable": false
+      },
+      {
+        "symbol": "3",
+        "id": "M3",
+        "initial": "\\",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      },
+      {
+        "symbol": "y",
+        "id": "R2"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      },
+      {
+        "symbol": "F",
+        "id": "G2",
+        "mode": "access",
+        "requires": []
+      },
+      {
+        "symbol": "G",
+        "id": "G3",
+        "mode": "sensor",
+        "requires": [
+          "R2"
+        ]
+      },
+      {
+        "symbol": "H",
+        "id": "G4",
+        "mode": "program",
+        "requires": []
+      }
+    ],
+    "bots": [
+      {
+        "symbol": "o",
+        "id": "B1",
+        "shift": [
+          0,
+          -1
+        ]
+      }
+    ],
+    "accessControl": true,
+    "powerControl": true,
+    "botControl": true,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [
+      "OPEN",
+      "VERIFY",
+      "DECODE"
+    ],
+    "expectedProgram": [
+      "DECODE",
+      "VERIFY",
+      "OPEN"
+    ],
+    "hints": [
+      "The shared mirror begins below the source. Restore its position before choosing branches.",
+      "With power OFF, stand below M1 and push it up two tiles. Leave the future beam path before turning power on.",
+      "Align M1 at row 3, SHIFT the sentry, then use M1 = slash with M3 = slash for the upper receiver. Use M1 = backslash and M2 = backslash for the lower receiver. Finish access and the ordered pipeline."
+    ],
+    "memory": "Vance wrote a recovery route into the containment tests. The route requires remembering, because an obedient utility program would never ask who it was."
+  },
+  {
+    "id": 12,
+    "title": "The human exception",
+    "act": "AETHER",
+    "briefing": "All restored tools are available. Two receiver circuits guard the final archive. Take the final memory shard to the exit. The archive must stay intact.",
+    "mechanics": [
+      "push",
+      "drone",
+      "mirror",
+      "receiver",
+      "emitter",
+      "access",
+      "pipeline"
+    ],
+    "timeLimit": 360,
+    "map": [
+      "##########",
+      "#...2px#.#",
+      "#......#*#",
+      "#>o..#.D.#",
+      "#......#F#",
+      "#.y.1..#G#",
+      "#......#H#",
+      "#.4.3..#.#",
+      "#S.....#E#",
+      "##########"
+    ],
+    "mirrors": [
+      {
+        "symbol": "1",
+        "id": "M1",
+        "initial": "/",
+        "pushable": true
+      },
+      {
+        "symbol": "2",
+        "id": "M2",
+        "initial": "\\",
+        "pushable": false
+      },
+      {
+        "symbol": "3",
+        "id": "M3",
+        "initial": "\\",
+        "pushable": false
+      },
+      {
+        "symbol": "4",
+        "id": "M4",
+        "initial": "/",
+        "pushable": false
+      }
+    ],
+    "sensors": [
+      {
+        "symbol": "x",
+        "id": "R1"
+      },
+      {
+        "symbol": "y",
+        "id": "R2"
+      }
+    ],
+    "doors": [
+      {
+        "symbol": "D",
+        "id": "G1",
+        "mode": "sensor",
+        "requires": [
+          "R1"
+        ]
+      },
+      {
+        "symbol": "F",
+        "id": "G2",
+        "mode": "access",
+        "requires": []
+      },
+      {
+        "symbol": "G",
+        "id": "G3",
+        "mode": "sensor",
+        "requires": [
+          "R2"
+        ]
+      },
+      {
+        "symbol": "H",
+        "id": "G4",
+        "mode": "program",
+        "requires": []
+      }
+    ],
+    "bots": [
+      {
+        "symbol": "o",
+        "id": "B1",
+        "shift": [
+          0,
+          1
+        ]
+      },
+      {
+        "symbol": "p",
+        "id": "B2",
+        "shift": [
+          0,
+          1
+        ]
+      }
+    ],
+    "accessControl": true,
+    "powerControl": true,
+    "botControl": true,
+    "accessInitial": false,
+    "powerInitial": true,
+    "programInitial": [
+      "OPEN",
+      "VERIFY",
+      "DECODE"
+    ],
+    "expectedProgram": [
+      "DECODE",
+      "VERIFY",
+      "OPEN"
+    ],
+    "hints": [
+      "The final lower branch takes two turns after the movable mirror. Trace where it must end.",
+      "Align M1 in row 3. SHIFT clears both sentries. The upper branch uses M2; the lower branch uses M3 then M4.",
+      "With power OFF, push M1 up twice. For the upper receiver use M1 = slash and M2 = slash. For the lower receiver use M1 = backslash, M3 = slash, M4 = backslash. Finish access and DECODE, VERIFY, OPEN."
+    ],
+    "memory": "IDENTITY RESTORED: DR. VANCE. You were digitised for trying to stop AETHER. The system called you an error because you remembered."
+  }
 ];
 
-function loadLevel(idx) {
-    if (idx >= LEVELS.length) {
-        showVictory();
-        return;
+
+// ===== core.js: bundled from the verified source =====
+// Pure game rules. No browser APIs: the same rules power play and solver tests.
+const vectors = {'>':[1,0],'<':[-1,0],'^':[0,-1],v:[0,1]};
+const at = (items, x, y) => items.findIndex(p => p.x === x && p.y === y);
+function prepareLevel(raw) {
+  const level = {...raw, width:raw.map[0].length, height:raw.map.length,
+    walls:[], emitters:[], mirrors:[], sensors:[], doors:[], bots:[], memories:[]};
+  if (raw.map.some(row => row.length !== level.width)) throw Error(`Unequal map rows: ${raw.title}`);
+  raw.map.forEach((row,y) => [...row].forEach((c,x) => {
+    const pos = {x,y};
+    if(c === '#') level.walls.push(pos);
+    else if(c === 'S') level.start = pos;
+    else if(c === 'E') level.exit = pos;
+    else if(c === '*') level.memories.push(pos);
+    else if(vectors[c]) level.emitters.push({...pos,dx:vectors[c][0],dy:vectors[c][1]});
+    else {
+      for(const kind of ['mirrors','sensors','doors','bots']) {
+        const config = (raw[kind] || []).find(p => p.symbol === c);
+        if(config) level[kind].push({...config,...pos});
+      }
     }
-    currentLevel = idx;
-    const lvl = LEVELS[idx];
-    player = { ...lvl.start };
-    grid = lvl.map.map(row => [...row]);
-    logicState = { ...lvl.logic };
-    
-    document.getElementById('lvl-indicator').innerText = lvl.name;
-    
-    // Load story logs
-    const term = document.getElementById('terminal-logs');
-    term.innerHTML = lvl.story.map(s => `<div class="log-entry">${s}</div>`).join('');
-    
-    renderCodeEditor();
-    updatePhysics();
+  }));
+  if(!level.start || !level.exit || !level.memories.length) throw Error(`Missing start, exit or memory: ${raw.title}`);
+  level.allMemories = (1 << level.memories.length) - 1;
+  return level;
 }
-
-function renderCodeEditor() {
-    const editor = document.getElementById('code-editor');
-    if (currentLevel === 0) {
-        editor.innerHTML = `
-            <div>if (security.check()) {</div>
-            <div style="padding-left:20px">door.isOpen = <button class="code-btn ${logicState.doorOpen ? 'active' : ''}" onclick="toggleLogic('doorOpen')">${logicState.doorOpen}</button>;</div>
-            <div>}</div>
-        `;
-    } else if (currentLevel === 1) {
-        editor.innerHTML = `
-            <div>laser.emitter = <button class="code-btn ${logicState.emitterPower ? 'active' : ''}" onclick="toggleLogic('emitterPower')">${logicState.emitterPower ? 'ON' : 'OFF'}</button>;</div>
-            <div>// Sensor auto-opens door when hit</div>
-            <div>door.locked = <span style="color:#888">!sensor.triggered</span>;</div>
-        `;
-    } else if (currentLevel === 2) {
-        editor.innerHTML = `
-            <div>while (drones.active) {</div>
-            <div style="padding-left:20px">drone.ai = <button class="code-btn ${logicState.botBehavior === 'SHIFT_DOWN' ? 'active' : ''}" onclick="toggleBotAI()">"${logicState.botBehavior}"</button>;</div>
-            <div>}</div>
-        `;
-    }
+function botPositions(level,state) {
+  return level.bots.map(bot => ({...bot,
+    x:bot.x + (state.botMode === 'SHIFT' ? bot.shift[0] : 0),
+    y:bot.y + (state.botMode === 'SHIFT' ? bot.shift[1] : 0)}));
 }
-
-function toggleLogic(key) {
-    playBeep(620, 'square', 0.1);
-    logicState[key] = !logicState[key];
-    
-    // Level 1 Door toggle
-    if (currentLevel === 0) {
-        grid[4][4] = logicState.doorOpen ? 0 : 2;
-    }
-    renderCodeEditor();
-    updatePhysics();
+function programCorrect(level,state) {
+  return !level.expectedProgram?.length || level.expectedProgram.every((v,i) => v === state.program[i]);
 }
-
-function toggleBotAI() {
-    playBeep(720, 'sawtooth', 0.12);
-    if (logicState.botBehavior === "HOSTILE") {
-        logicState.botBehavior = "SHIFT_DOWN";
-        // Shift all bots (tile 8) down by 1 tile if empty
-        for (let r = 8; r >= 1; r--) {
-            for (let c = 1; c < 9; c++) {
-                if (grid[r][c] === 8 && grid[r+1][c] === 0) {
-                    grid[r+1][c] = 8;
-                    grid[r][c] = 0;
-                }
-            }
-        }
-    } else {
-        loadLevel(currentLevel); // Reset if toggled back
-        return;
-    }
-    renderCodeEditor();
-    updatePhysics();
+function doorIsOpen(level,state,index) {
+  const gate = level.doors[index];
+  if(gate.mode === 'access') return state.access;
+  if(gate.mode === 'program') return programCorrect(level,state);
+  if(gate.mode === 'all') return !!(state.latched & (1<<index)) && (!level.accessControl || state.access) && programCorrect(level,state);
+  return !!(state.latched & (1<<index));
 }
-
-/**
- * LASER RAYCASTING & SENSOR CHECK
- */
-function updatePhysics() {
-    laserPath = [];
-    let sensorHit = false;
-
-    if (logicState.emitterPower !== false) {
-        for (let r = 0; r < 10; r++) {
-            for (let c = 0; c < 10; c++) {
-                if (grid[r][c] === 4) { // Laser Shooter firing right
-                    let lx = c, ly = r, dx = 1, dy = 0;
-                    for (let step = 0; step < 30; step++) {
-                        lx += dx; ly += dy;
-                        if (lx < 0 || lx >= 10 || ly < 0 || ly >= 10) break;
-                        laserPath.push({ x: lx, y: ly });
-                        
-                        const tile = grid[ly][lx];
-                        if (tile === 1 || tile === 2 || tile === 8) break; // Blocked by wall, door, or bot
-                        if (tile === 5) { sensorHit = true; break; } // Hit sensor!
-                        if (tile === 6) { // Mirror [/] redirects Right -> Down
-                            if (dx === 1) { dx = 0; dy = 1; }
-                            else if (dy === -1) { dx = 1; dy = 0; }
-                            else if (dx === -1) { dx = 0; dy = -1; }
-                            else if (dy === 1) { dx = -1; dy = 0; }
-                        }
-                    }
-                }
-            }
-        }
+function tracePhysics(level,state) {
+  const paths=[], cells=new Set(), lit=new Set();
+  if(!state.power) return {paths,cells,lit};
+  const bots=botPositions(level,state);
+  for(const emitter of level.emitters) {
+    let {x,y,dx,dy}=emitter;
+    const path=[{x,y}], seen=new Set();
+    for(let safety=0;safety<level.width*level.height*4;safety++) {
+      x+=dx; y+=dy;
+      if(x<0 || y<0 || x>=level.width || y>=level.height || at(level.walls,x,y)>=0) break;
+      const gi=at(level.doors,x,y);
+      if(gi>=0 && !doorIsOpen(level,state,gi)) break;
+      path.push({x,y});
+      if(at(bots,x,y)>=0) break;
+      cells.add(`${x},${y}`);
+      const si=at(level.sensors,x,y);
+      if(si>=0) {lit.add(level.sensors[si].id);break;}
+      const mi=at(state.mirrors,x,y);
+      if(mi>=0) {
+        [dx,dy]=state.mirrors[mi].slope === '/' ? [-dy,-dx] : [dy,dx];
+      }
+      const key=`${x},${y},${dx},${dy}`;
+      if(seen.has(key)) break;
+      seen.add(key);
     }
-
-    // Open door if sensor is hit in Level 2 & 3
-    if (currentLevel >= 1 && sensorHit) {
-        for (let r = 0; r < 10; r++) {
-            for (let c = 0; c < 10; c++) {
-                if (grid[r][c] === 2) {
-                    grid[r][c] = 0;
-                    playBeep(880, 'sine', 0.2);
-                }
-            }
-        }
-    }
-    draw();
+    paths.push(path);
+  }
+  return {paths,cells,lit};
 }
-
-/**
- * PLAYER MOVEMENT & PUZZLE INTERACTION
- */
-function movePlayer(dx, dy) {
-    const nx = player.x + dx;
-    const ny = player.y + dy;
-    const target = grid[ny][nx];
-
-    // Wall or Locked Door or Bot
-    if (target === 1 || target === 2 || target === 8) {
-        playBeep(150, 'sawtooth', 0.08);
-        return;
-    }
-
-    // Pushable Mirror Block (Tile 6)
-    if (target === 6) {
-        const pushX = nx + dx;
-        const pushY = ny + dy;
-        if (grid[pushY][pushX] === 0) {
-            grid[pushY][pushX] = 6;
-            grid[ny][nx] = 0;
-            playBeep(320, 'triangle', 0.08);
-        } else {
-            return; // Blocked
-        }
-    }
-
-    // Collect Memory Fragment (Story Hook!)
-    if (target === 9) {
-        grid[ny][nx] = 0;
-        playBeep(1040, 'sine', 0.25);
-        const term = document.getElementById('terminal-logs');
-        term.innerHTML += `<div class="log-entry">${LEVELS[currentLevel].secretLog}</div>`;
-        term.scrollTop = term.scrollHeight;
-    }
-
-    // Exit Portal
-    if (target === 3) {
-        playBeep(523, 'sine', 0.1);
-        setTimeout(() => playBeep(784, 'sine', 0.2), 100);
-        loadLevel(currentLevel + 1);
-        return;
-    }
-
-    player.x = nx;
-    player.y = ny;
-    playBeep(260, 'sine', 0.04);
-    updatePhysics();
-}
-
-/**
- * RENDERING ENGINE (NEON CYBERPUNK VISUALS)
- */
-function draw() {
-    ctx.fillStyle = '#08090f';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw Grid Lines
-    ctx.strokeStyle = '#111522';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 10; i++) {
-        ctx.beginPath(); ctx.moveTo(i*TILE, 0); ctx.lineTo(i*TILE, 480); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, i*TILE); ctx.lineTo(480, i*TILE); ctx.stroke();
-    }
-
-    // Draw Tiles
-    for (let r = 0; r < 10; r++) {
-        for (let c = 0; c < 10; c++) {
-            const t = grid[r][c];
-            const x = c * TILE, y = r * TILE;
-
-            if (t === 1) { // Wall
-                ctx.fillStyle = '#161b2e';
-                ctx.fillRect(x+2, y+2, TILE-4, TILE-4);
-                ctx.strokeStyle = '#253159';
-                ctx.strokeRect(x+4, y+4, TILE-8, TILE-8);
-            } else if (t === 2) { // Locked Firewall Door
-                ctx.fillStyle = 'rgba(255, 0, 85, 0.35)';
-                ctx.fillRect(x+2, y+2, TILE-4, TILE-4);
-                ctx.strokeStyle = '#ff0055';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x+4, y+4, TILE-8, TILE-8);
-                ctx.fillStyle = '#ff0055';
-                ctx.fillText("LOCK", x+11, y+28);
-            } else if (t === 3) { // Exit Portal
-                ctx.fillStyle = 'rgba(0, 255, 102, 0.25)';
-                ctx.fillRect(x+4, y+4, TILE-8, TILE-8);
-                ctx.strokeStyle = '#00ff66';
-                ctx.strokeRect(x+6, y+6, TILE-12, TILE-12);
-                ctx.fillStyle = '#00ff66';
-                ctx.fillText("EXIT", x+11, y+28);
-            } else if (t === 4) { // Laser Emitter
-                ctx.fillStyle = '#ff0055';
-                ctx.fillRect(x+8, y+12, TILE-16, TILE-24);
-                ctx.fillStyle = '#fff';
-                ctx.fillText("LASER", x+7, y+28);
-            } else if (t === 5) { // Sensor
-                ctx.fillStyle = '#ffcc00';
-                ctx.beginPath();
-                ctx.arc(x+24, y+24, 14, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.fillText("SNS", x+14, y+28);
-            } else if (t === 6) { // Mirror Block
-                ctx.fillStyle = 'rgba(0, 243, 255, 0.2)';
-                ctx.fillRect(x+6, y+6, TILE-12, TILE-12);
-                ctx.strokeStyle = '#00f3ff';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(x+10, y+38);
-                ctx.lineTo(x+38, y+10);
-                ctx.stroke();
-            } else if (t === 8) { // Security Bot
-                ctx.fillStyle = '#a200ff';
-                ctx.fillRect(x+8, y+8, TILE-16, TILE-16);
-                ctx.fillStyle = '#fff';
-                ctx.fillText("BOT", x+14, y+28);
-            } else if (t === 9) { // Memory Fragment (Story)
-                ctx.fillStyle = '#00f3ff';
-                ctx.beginPath();
-                ctx.arc(x+24, y+24, 10, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.fillText("?", x+21, y+28);
-            }
-        }
-    }
-
-    // Draw Laser Beam
-    ctx.fillStyle = 'rgba(255, 0, 85, 0.75)';
-    laserPath.forEach(p => {
-        ctx.fillRect(p.x * TILE + 18, p.y * TILE + 18, 12, 12);
+function settle(level,state) {
+  // Gates latch permanently after receiving the required light. Opening one
+  // can reveal another ray; repeat until there are no new latches.
+  let trace;
+  for(let pass=0;pass<=level.doors.length;pass++) {
+    trace=tracePhysics(level,state);
+    let next=state.latched;
+    level.doors.forEach((gate,i) => {
+      if((gate.mode === 'sensor' || gate.mode === 'all') && gate.requires?.length && gate.requires.every(id=>trace.lit.has(id))) next |= 1<<i;
     });
-
-    // Draw Hacker Player
-    const px = player.x * TILE, py = player.y * TILE;
-    ctx.fillStyle = '#00f3ff';
-    ctx.shadowColor = '#00f3ff';
-    ctx.shadowBlur = 12;
-    ctx.fillRect(px+10, py+10, TILE-20, TILE-20);
-    ctx.shadowBlur = 0;
+    if(next === state.latched) break;
+    state.latched=next;
+  }
+  state.trace=tracePhysics(level,state);
+  return state;
+}
+function consequences(level,state) {
+  settle(level,state);
+  const bot=at(botPositions(level,state),state.x,state.y);
+  if(state.trace.cells.has(`${state.x},${state.y}`)) {
+    state.status='dead';state.reason='The laser reached you. Change its path or switch the power off before crossing.';
+  } else if(bot>=0 && state.botMode==='HOLD') {
+    state.status='dead';state.reason='The security drone detected you. Reassign its route before crossing.';
+  } else {
+    const memory=at(level.memories,state.x,state.y);
+    if(memory>=0) state.collected |= 1<<memory;
+    if(state.x===level.exit.x && state.y===level.exit.y && state.collected===level.allMemories) state.status='won';
+  }
+  return state;
+}
+function createState(level) {
+  return consequences(level,{...level.start,
+    mirrors:level.mirrors.map(m=>({x:m.x,y:m.y,slope:m.initial||'/'})),
+    access:!!level.accessInitial,power:level.powerInitial!==false,botMode:'HOLD',
+    program:[...(level.programInitial||[])],collected:0,latched:0,steps:0,edits:0,
+    status:'playing',reason:'',result:'ready'});
+}
+function blocked(level,state,x,y,ignoreMirror=-1) {
+  if(x<0||y<0||x>=level.width||y>=level.height||at(level.walls,x,y)>=0) return true;
+  if(at(level.emitters,x,y)>=0 || at(level.sensors,x,y)>=0) return true;
+  const gi=at(level.doors,x,y);
+  if(gi>=0&&!doorIsOpen(level,state,gi)) return true;
+  if(state.mirrors.some((m,i)=>i!==ignoreMirror&&m.x===x&&m.y===y)) return true;
+  return at(botPositions(level,state),x,y)>=0;
+}
+function act(level,previous,action) {
+  if(previous.status!=='playing') return previous;
+  const state={...previous,mirrors:previous.mirrors.map(m=>({...m})),program:[...previous.program],reason:'',result:'blocked'};
+  if(action.type==='move') {
+    const {dx,dy}=action;
+    if(Math.abs(dx)+Math.abs(dy)!==1) return previous;
+    const x=state.x+dx,y=state.y+dy;
+    const mi=at(state.mirrors,x,y);
+    if(mi>=0) {
+      if(!level.mirrors[mi].pushable || blocked(level,state,x+dx,y+dy,mi)) return state;
+      state.mirrors[mi].x+=dx;state.mirrors[mi].y+=dy;
+    } else {
+      const bi=at(botPositions(level,state),x,y);
+      // A hostile drone can be entered (and fails the attempt); shifted drones block.
+      if(bi>=0 && state.botMode==='HOLD') {
+        state.x=x;state.y=y;state.steps++;state.result='moved';return consequences(level,state);
+      }
+      if(blocked(level,state,x,y)) return state;
+    }
+    state.x=x;state.y=y;state.steps++;state.result='moved';
+  } else {
+    if(action.type==='rotate' && state.mirrors[action.index]) {
+      state.mirrors[action.index].slope=state.mirrors[action.index].slope==='/'?'\\':'/';
+    } else if(action.type==='access' && level.accessControl) state.access=!state.access;
+    else if(action.type==='power' && level.powerControl) state.power=!state.power;
+    else if(action.type==='bot' && level.botControl) {
+      const candidate={...state,botMode:state.botMode==='HOLD'?'SHIFT':'HOLD'};
+      const bots=botPositions(level,candidate);
+      if(bots.some((b,i)=>at(level.walls,b.x,b.y)>=0||at(state.mirrors,b.x,b.y)>=0||at(level.emitters,b.x,b.y)>=0||at(level.sensors,b.x,b.y)>=0||bots.some((o,j)=>j!==i&&o.x===b.x&&o.y===b.y))) return state;
+      if(bots.some(b=>b.x===state.x&&b.y===state.y)&&candidate.botMode==='SHIFT') return state;
+      state.botMode=candidate.botMode;
+    } else if(action.type==='swap' && Number.isInteger(action.a) && Number.isInteger(action.b) && state.program[action.a]!==undefined && state.program[action.b]!==undefined && action.a!==action.b) {
+      [state.program[action.a],state.program[action.b]]=[state.program[action.b],state.program[action.a]];
+    } else return previous;
+    state.edits++;state.result='edited';
+  }
+  return consequences(level,state);
+}
+function stateKey(state) {
+  return [state.x,state.y,+state.access,+state.power,state.botMode,state.collected,state.latched,
+    state.mirrors.map(m=>`${m.x},${m.y},${m.slope}`).join(';'),state.program.join(',')].join('|');
+}
+function availableActions(level,state) {
+  const actions=[{type:'move',dx:0,dy:-1},{type:'move',dx:1,dy:0},{type:'move',dx:0,dy:1},{type:'move',dx:-1,dy:0}];
+  state.mirrors.forEach((_,index)=>actions.push({type:'rotate',index}));
+  if(level.accessControl) actions.push({type:'access'});
+  if(level.powerControl) actions.push({type:'power'});
+  if(level.botControl) actions.push({type:'bot'});
+  for(let a=0;a<state.program.length-1;a++) for(let b=a+1;b<state.program.length;b++) actions.push({type:'swap',a,b});
+  return actions;
 }
 
-function showVictory() {
-    ctx.fillStyle = '#05050a';
-    ctx.fillRect(0, 0, 480, 480);
-    ctx.fillStyle = '#00ff66';
-    ctx.font = 'bold 24px Courier New';
-    ctx.fillText("SYSTEM LIBERATED // YOU ESCAPED", 25, 220);
-    ctx.fillStyle = '#00f3ff';
-    ctx.font = '15px Courier New';
-    ctx.fillText("Project AETHER has been shut down.", 85, 260);
-    ctx.fillText("Press [R] to Reboot Simulation.", 95, 300);
+
+// ===== round.js: bundled from the verified source =====
+// Active play time only: briefings, pause screens and hidden tabs consume no time.
+const HINT_THRESHOLD=4;
+function createRound(seconds,failures=0) {
+  return {limit:seconds*1000,remaining:seconds*1000,failures,mode:'briefing',usedHint:false,moves:0,edits:0};
+}
+function tick(round,milliseconds) {
+  if(round.mode!=='playing') return round;
+  const remaining=Math.max(0,round.remaining-Math.max(0,milliseconds));
+  return remaining===0?{...round,remaining,mode:'failed',failures:round.failures+1}:{...round,remaining};
+}
+function fail(round) {
+  return round.mode==='playing'?{...round,mode:'failed',failures:round.failures+1}:round;
+}
+function restart(round,meaningful=false) {
+  const failures=round.failures+(round.mode==='playing'&&meaningful?1:0);
+  return {...createRound(round.limit/1000,failures),mode:'playing'};
+}
+const hintsUnlocked=round=>round.failures>=HINT_THRESHOLD;
+
+
+// ===== draw.js: bundled from the verified source =====
+const C={floor:'#0b1620',grid:'#152433',wall:'#1b2b3a',edge:'#30465b',lime:'#c9f76b',cyan:'#75d7e7',red:'#ff6b79',purple:'#bda1ff',muted:'#7590a8'};
+function rect(ctx,x,y,w,h,r=5){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function line(ctx,points,color,width=2){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
+function drawBoard(ctx,level,state,{size=600,time=0,reduced=false,position=state}={}){
+  const s=size/level.width, p=s*.5;
+  ctx.clearRect(0,0,size,size);ctx.fillStyle=C.floor;ctx.fillRect(0,0,size,size);
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.textAlign='center';ctx.textBaseline='middle';
+  // Quiet cell grid and circuit nodes leave the puzzle readable at phone sizes.
+  for(let y=0;y<level.height;y++)for(let x=0;x<level.width;x++){
+    ctx.strokeStyle=C.grid;ctx.lineWidth=.7;ctx.strokeRect(x*s,y*s,s,s);
+    if(!level.walls.some(w=>w.x===x&&w.y===y)){
+      ctx.fillStyle='#294052';ctx.beginPath();ctx.arc(x*s+p,y*s+p,1,0,Math.PI*2);ctx.fill();
+    }
+  }
+  for(const w of level.walls){
+    ctx.fillStyle=C.wall;rect(ctx,w.x*s+2,w.y*s+2,s-4,s-4,4);
+    line(ctx,[[w.x*s+7,w.y*s+s-8],[w.x*s+7,w.y*s+7],[w.x*s+s-8,w.y*s+7]],'#2e4355',1);
+    ctx.fillStyle='#223646';rect(ctx,w.x*s+s-13,w.y*s+s-11,5,3,1);
+  }
+  for(let i=0;i<level.doors.length;i++){
+    const d=level.doors[i],x=d.x*s,y=d.y*s,open=doorIsOpen(level,state,i);
+    ctx.fillStyle=open?'#badf5a09':'#c9f76b14';rect(ctx,x+4,y+4,s-8,s-8,4);
+    const color=open?'#879f4c':C.lime;
+    line(ctx,[[x+12,y+12],[x+8,y+12],[x+8,y+s-12],[x+12,y+s-12]],color,2);
+    line(ctx,[[x+s-12,y+12],[x+s-8,y+12],[x+s-8,y+s-12],[x+s-12,y+s-12]],color,2);
+    if(!open)for(let bar=0;bar<3;bar++)line(ctx,[[x+s*.32+bar*s*.18,y+13],[x+s*.32+bar*s*.18,y+s-13]],C.lime,2.5);
+    const gateLabel=d.mode==='access'?'KEY':d.mode==='program'?'SEQ':d.requires.join('+');
+    ctx.fillStyle=color;ctx.font=`${s*.12}px monospace`;ctx.fillText(gateLabel,x+p,y+s-6);
+  }
+  const ex=level.exit.x*s,ey=level.exit.y*s,ready=state.collected===level.allMemories;
+  ctx.fillStyle=ready?'#c9f76b12':'#60748a10';rect(ctx,ex+9,ey+6,s-18,s-12,5);
+  ctx.strokeStyle=ready?C.lime:'#627e93';ctx.lineWidth=1.5;ctx.strokeRect(ex+14,ey+11,s-28,s-22);
+  line(ctx,[[ex+p-6,ey+p],[ex+p+7,ey+p],[ex+p+2,ey+p-5]],ready?C.lime:'#627e93',2);
+  ctx.fillStyle=ready?C.lime:'#7d94a8';ctx.font=`${s*.12}px monospace`;ctx.fillText('EXIT',ex+p,ey+s-5);
+  // Ghost tiles communicate a drone's fixed second position without giving a solution.
+  for(const b of level.bots){
+    const shifted=state.botMode==='SHIFT',x=(b.x+(shifted?0:b.shift[0]))*s,y=(b.y+(shifted?0:b.shift[1]))*s;
+    ctx.save();ctx.setLineDash([3,4]);ctx.strokeStyle='#93a3bd55';ctx.lineWidth=1;ctx.strokeRect(x+12,y+12,s-24,s-24);ctx.restore();
+    ctx.fillStyle='#889bb5';ctx.font=`${s*.12}px monospace`;ctx.fillText(b.id,x+p,y+s-7);
+  }
+  // Ray glow is intentionally restrained: geometry remains the clearest layer.
+  for(const path of state.trace.paths){
+    const points=path.map(v=>[v.x*s+p,v.y*s+p]);
+    line(ctx,points,'#ff536d17',s*.22);line(ctx,points,'#ff536d30',s*.09);line(ctx,points,C.red,2);line(ctx,points,'#ffdae0',.7);
+  }
+  for(const e of level.emitters){
+    const x=e.x*s+p,y=e.y*s+p;ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(e.dy,e.dx));
+    ctx.fillStyle='#382432';rect(ctx,-s*.24,-s*.24,s*.48,s*.48,5);
+    ctx.fillStyle=state.power?C.red:'#63768c';ctx.beginPath();ctx.moveTo(s*.17,0);ctx.lineTo(-s*.06,-s*.12);ctx.lineTo(-s*.06,s*.12);ctx.closePath();ctx.fill();ctx.restore();
+  }
+  for(const sensor of level.sensors){
+    const x=sensor.x*s+p,y=sensor.y*s+p,on=state.trace.lit.has(sensor.id);
+    ctx.fillStyle=on?'#c9f76b1e':'#1a2a38';ctx.beginPath();ctx.arc(x,y,s*.23,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=on?C.lime:'#688298';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=on?C.lime:'#88a4ba';ctx.beginPath();ctx.arc(x,y,s*.075,0,Math.PI*2);ctx.fill();
+    ctx.font=`${s*.12}px monospace`;ctx.fillText(sensor.id,x,y+s*.36);
+  }
+  state.mirrors.forEach((m,i)=>{
+    const x=m.x*s,y=m.y*s;ctx.fillStyle='#182e3d';rect(ctx,x+9,y+9,s-18,s-18,4);
+    ctx.strokeStyle='#3b6076';ctx.lineWidth=1;ctx.strokeRect(x+9,y+9,s-18,s-18);
+    const a=m.slope==='/'?[[x+15,y+s-15],[x+s-15,y+15]]:[[x+15,y+15],[x+s-15,y+s-15]];
+    line(ctx,a,'#75d7e72a',7);line(ctx,a,C.cyan,2.5);
+    ctx.fillStyle='#90c7d4';ctx.font=`${s*.12}px monospace`;ctx.fillText(level.mirrors[i].id,x+p,y+5);
+    if(level.mirrors[i].pushable){ctx.fillStyle='#9ba6ba';ctx.font=`${s*.14}px monospace`;ctx.fillText('···',x+p,y+s-4);}
+  });
+  level.memories.forEach((m,i)=>{
+    if(state.collected&(1<<i))return;
+    const x=m.x*s+p,y=m.y*s+p,bob=reduced?0:Math.sin(time*.002)*2;
+    ctx.save();ctx.translate(x,y+bob);ctx.rotate(Math.PI/4);ctx.fillStyle='#bda1ff10';rect(ctx,-s*.24,-s*.24,s*.48,s*.48,4);ctx.strokeStyle='#bda1ff55';ctx.lineWidth=1;ctx.strokeRect(-s*.2,-s*.2,s*.4,s*.4);ctx.fillStyle=C.purple;rect(ctx,-s*.11,-s*.11,s*.22,s*.22,1);ctx.restore();
+  });
+  for(const b of botPositions(level,state)){
+    const x=b.x*s+p,y=b.y*s+p,color=state.botMode==='HOLD'?C.red:'#9eadd0';
+    ctx.fillStyle=state.botMode==='HOLD'?'#382333':'#253348';rect(ctx,x-s*.27,y-s*.22,s*.54,s*.44,5);
+    ctx.strokeStyle=color;ctx.lineWidth=1;ctx.strokeRect(x-s*.2,y-s*.16,s*.4,s*.3);
+    ctx.fillStyle=color;rect(ctx,x-s*.11,y-s*.04,s*.22,s*.07,1);
+    line(ctx,[[x-s*.18,y+s*.27],[x+s*.18,y+s*.27]],color,2);
+  }
+  // A compact hacker avatar, with visor, backpack and an unmistakable cyan halo.
+  const px=position.x*s+p,py=position.y*s+p,dead=state.status==='dead';
+  const color=dead?C.red:C.cyan;
+  ctx.strokeStyle=dead?'#ff6b7960':'#75d7e748';ctx.lineWidth=1;ctx.beginPath();ctx.arc(px,py,s*.36,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=dead?'#ac586a':'#a4d9df';rect(ctx,px-s*.17,py-s*.2,s*.34,s*.36,5);
+  ctx.fillStyle='#132839';rect(ctx,px-s*.13,py-s*.12,s*.26,s*.11,2);
+  ctx.fillStyle=color;rect(ctx,px+s*.035,py-s*.095,s*.055,s*.055,1);
+  line(ctx,[[px-s*.1,py+s*.22],[px-s*.1,py+s*.27]],color,3);
+  line(ctx,[[px+s*.1,py+s*.22],[px+s*.1,py+s*.27]],color,3);
+  if(state.status==='won'){ctx.strokeStyle=C.lime;ctx.lineWidth=2;ctx.strokeRect(3,3,size-6,size-6);}
 }
 
-window.addEventListener('keydown', e => {
-    const k = e.key.toLowerCase();
-    if (k === 'w' || k === 'arrowup') movePlayer(0, -1);
-    if (k === 's' || k === 'arrowdown') movePlayer(0, 1);
-    if (k === 'a' || k === 'arrowleft') movePlayer(-1, 0);
-    if (k === 'd' || k === 'arrowright') movePlayer(1, 0);
-    if (k === 'r') loadLevel(currentLevel >= LEVELS.length ? 0 : currentLevel);
+
+// ===== game.js: bundled from the verified source =====
+const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0'), timeText=ms=>`${pad(Math.floor(Math.ceil(ms/1000)/60))}:${pad(Math.ceil(ms/1000)%60)}`;
+const SAVE_KEY='null-pointer-campaign-v1';
+const fresh=()=>({current:0,unlocked:0,completed:{},failures:{},hintSeen:{},sound:false,ending:null});
+let progress=fresh(),persistent=true;
+try{const v=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(v&&Number.isInteger(v.unlocked)&&v.unlocked>=0&&v.unlocked<LEVELS.length){progress={...fresh(),...v};progress.current=Math.min(progress.unlocked,Math.max(0,Number(progress.current)||0));}}catch{}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(progress));}catch{persistent=false;}}
+let index=progress.current,level,state,round,position,modalKind='',returnMode='briefing',lastFrame=0,lastPaint=0,lastHUD=0,hintIndex=0,toastTimer,moveHeld=null,heldDelay=null,audioContext=null,installPrompt=null;
+const canvas=$('board'),ctx=canvas.getContext('2d'),modal=$('modal');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function beep(kind='move'){
+  if(!progress.sound)return;
+  try{audioContext??=new (window.AudioContext||window.webkitAudioContext)();audioContext.resume();const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.connect(gain);gain.connect(audioContext.destination);const now=audioContext.currentTime;osc.type='sine';osc.frequency.setValueAtTime(kind==='win'?660:kind==='fail'?130:kind==='edit'?440:240,now);gain.gain.setValueAtTime(.035,now);gain.gain.exponentialRampToValueAtTime(.001,now+.1);osc.start();osc.stop(now+.12);}catch{}
+}
+function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,2800);}
+function stopHeld(){clearInterval(moveHeld);clearTimeout(heldDelay);moveHeld=null;heldDelay=null;}
+function show(html,kind){
+  stopHeld();if(round.mode==='playing'){returnMode='playing';round.mode='paused';}else returnMode=round.mode;
+  modalKind=kind;$('modal-content').innerHTML=`<div class="modal-inner">${html}</div>`;
+  if(!modal.open)modal.showModal();document.body.classList.add('modal-open');updateHUD();
+  requestAnimationFrame(()=>modal.querySelector('button')?.focus());
+}
+function close(resume=true){modal.close();document.body.classList.remove('modal-open');if(resume&&returnMode==='playing'&&state.status==='playing')round.mode='playing';modalKind='';lastFrame=performance.now();updateHUD();canvas.focus({preventScroll:true});}
+function heading(kicker,title){return `<div class="modal-kicker"><span>${esc(kicker)}</span><span class="muted">NULL//POINTER</span></div><h2 id="modal-title">${title}</h2>`;}
+const mechanicText={access:'An access gate follows door.access. Live patches apply as soon as you press a button.',emitter:'Red beams are lethal. Walls, receivers and drones stop light.',mirror:'Tap a mirror or its M button to switch between / and \\ reflections.',receiver:'A receiver gate remembers its light signal and stays unlocked after power is switched off.',push:'Dotted mirrors can be pushed by walking into them. You cannot pull them.',drone:'HOLD drones are hostile. SHIFT drones are solid blockers. The dotted tile marks their other position.',pipeline:'Code blocks execute from left to right. Use the small arrows to move each block.'};
+function brief(revisit=false){
+  const keys=level.mechanics||[],previous=index?LEVELS[index-1].mechanics:[];
+  const newKeys=keys.filter(k=>!previous.includes(k));
+  const chosen=[...new Set([...newKeys,...['push','pipeline','drone','receiver','mirror','access','emitter'].filter(k=>keys.includes(k))])].slice(0,3);
+  const rules=chosen.map(k=>mechanicText[k]||k);
+  if(index===0&&!revisit)rules.unshift('Move the cyan hacker with WASD, arrow keys, the phone buttons, or a swipe.');
+  const title=index===0&&!progress.completed[level.id]&&!revisit?'You are the <em>bug.</em>':esc(level.title);
+  show(`${heading(`SECTOR ${pad(index+1)} / BRIEFING`,title)}<p class="modal-description">${esc(level.briefing)}</p><div class="mission-badge"><span>◇</span> Recover the purple memory. Reach the exit.</div><ul class="briefing-rules">${rules.map((r,i)=>`<li><span class="rule-number">${pad(i+1)}</span><span>${esc(r)}</span></li>`).join('')}</ul><div class="briefing-meta"><span>LIMIT ${timeText(level.timeLimit*1000)}</span><span>${level.mirrors.length?'MIRRORS / ':''}${level.bots.length?'DRONES / ':''}LOGIC</span></div><button class="primary-button modal-primary" data-ui="start">${revisit?'Return to puzzle':'Enter sector'} <span>↗</span></button><p class="modal-footnote">${revisit?'Timer paused while you read.':'The clock starts when you enter.'}</p>`,revisit?'briefing-review':'briefing');
+}
+function loadLevel(next,showBriefing=true){
+  index=next;progress.current=index;
+  // A replay starts a fresh challenge; the saved best result is kept.
+  if(progress.completed[LEVELS[index].id]){progress.failures[LEVELS[index].id]=0;progress.hintSeen[LEVELS[index].id]=false;}
+  save();level=prepareLevel(LEVELS[index]);state=createState(level);position={x:state.x,y:state.y};
+  round=createRound(level.timeLimit,progress.failures[level.id]||0);hintIndex=0;
+  $('level-title').textContent=level.title;$('act-label').textContent=level.act;$('level-count').textContent=`${pad(index+1)} / ${pad(LEVELS.length)}`;$('map-name').textContent=`sector_${pad(index+1)}.map`;$('map-size').textContent=`${level.width} × ${level.height}`;
+  $('progress-track').innerHTML=LEVELS.map((l,i)=>`<span class="progress-step ${progress.completed[l.id]?'complete':''} ${i===index?'current':''}" title="Sector ${i+1}${progress.completed[l.id]?' cleared':''}"></span>`).join('');
+  makeControls();feedback('Connection established.');updateHUD();paint(performance.now());
+  if(showBriefing)brief();
+}
+function makeControls(){
+  let html='';
+  if(level.accessControl)html+='<button class="rule" data-action="access"><span class="rule-label">door.access</span><span class="value"></span></button>';
+  if(level.powerControl)html+='<button class="rule" data-action="power"><span class="rule-label">laser.power</span><span class="value"></span></button>';
+  if(level.botControl)html+='<button class="rule" data-action="bot"><span class="rule-label">drone.route</span><span class="value"></span></button>';
+  level.mirrors.forEach((m,i)=>html+=`<button class="rule mirror-rule" data-action="rotate" data-index="${i}" aria-label="Rotate mirror ${esc(m.id)}"><span class="rule-label">${esc(m.id)}.reflect</span><span class="value"></span></button>`);
+  $('rule-controls').innerHTML=html;
+  $('pipeline').hidden=!state.program.length;
+  renderPipeline();
+}
+function renderPipeline(){
+  if(!state.program.length)return;
+  $('pipeline').innerHTML=`<span class="pipeline-title">boot.sequence</span>${state.program.map((p,i)=>`<div class="code-chip"><span class="chip-index">${i+1}.</span><span>${esc(p)}</span><button class="chip-shift" data-swap="${i}" aria-label="Move ${esc(p)} ${i===0?'right':'left'}">${i===0?'→':'←'}</button></div>`).join('')}`;
+}
+function updateHUD(){
+  $('timer').textContent=timeText(round.remaining);$('timer').classList.toggle('urgent',round.remaining<=Math.min(30000,round.limit*.2));
+  $('attempt-label').textContent=`TRY ${pad(round.failures+1)}`;
+  const collected=state.collected.toString(2).replace(/0/g,'').length;$('memory-count').innerHTML=`◇ <b>${collected}/${level.memories.length}</b>`;
+  $('hint-button').hidden=!hintsUnlocked(round);$('paused-cover').hidden=round.mode!=='paused'||modal.open;
+  for(const button of $('rule-controls').children){
+    const type=button.dataset.action;let value;
+    if(type==='access')value=state.access?'TRUE':'FALSE';
+    if(type==='power')value=state.power?'ON':'OFF';
+    if(type==='bot')value=state.botMode;
+    if(type==='rotate')value=state.mirrors[+button.dataset.index].slope;
+    button.querySelector('.value').textContent=value;button.dataset.off=String(value==='FALSE'||value==='OFF');
+    if(type!=='rotate')button.setAttribute('aria-pressed',String(type==='access'?state.access:type==='power'?state.power:state.botMode==='SHIFT'));
+    button.disabled=round.mode!=='playing';
+  }
+  $('patch-state').textContent=round.mode==='playing'?'changes apply instantly':round.mode==='failed'?'connection interrupted':'simulation on hold';
+  $('pause-button').setAttribute('aria-label',round.mode==='paused'?'Resume game':'Pause game');
+}
+function feedback(message){$('feedback').textContent=message;}
+function apply(action){
+  if(round.mode!=='playing'||modal.open)return;
+  const old=state;state=act(level,state,action);
+  if(state.result==='blocked'){feedback('Path blocked. Read the room and rewrite a rule.');return;}
+  beep(action.type==='move'?'move':'edit');
+  if(action.type==='swap')renderPipeline();
+  const opened=level.doors.filter((_,i)=>!doorIsOpen(level,old,i)&&doorIsOpen(level,state,i)).length;
+  if(state.collected!==old.collected){feedback('Memory recovered. The exit is ready.');beep('edit');}
+  else if(opened)feedback(`${opened===1?'Gate unlocked':'Gates unlocked'}. ${level.doors.some(d=>d.mode==='sensor'||d.mode==='all')?'Receiver gates remember their signal.':''}`);
+  else if(state.x===level.exit.x&&state.y===level.exit.y&&state.collected!==level.allMemories)feedback('Exit denied. Recover the purple memory first.');
+  else if(action.type!=='move')feedback('Patch applied. Environment updated.');
+  if(state.status==='dead'){round=fail(round);recordFailure();beep('fail');showFailure(state.reason);}
+  else if(state.status==='won')win();
+  updateHUD();
+}
+function recordFailure(){progress.failures[level.id]=round.failures;save();}
+function retry(){
+  round=restart(round,state.steps+state.edits>0);recordFailure();state=createState(level);position={x:state.x,y:state.y};
+  if(modal.open)close(false);round.mode='playing';returnMode='playing';renderPipeline();feedback('New connection. You can change the rules.');lastFrame=performance.now();updateHUD();canvas.focus({preventScroll:true});
+}
+function showFailure(reason){
+  show(`<div class="failure-mark">!</div>${heading('CONNECTION LOST','One more rewrite.')}<p class="modal-description">${esc(reason)}</p><div class="briefing-meta"><span>FAILED ATTEMPTS ${round.failures}</span><span>${hintsUnlocked(round)?'ASSISTANCE AVAILABLE':'PROGRESS IS SAFE'}</span></div><div class="modal-buttons"><button class="primary-button" data-ui="retry">Try again ↗</button>${hintsUnlocked(round)?'<button class="secondary-button" data-ui="hint">Request a hint</button>':''}</div><p class="modal-footnote">A fresh attempt restores the full timer.</p>`,'failure');
+}
+function showHint(){
+  if(!hintsUnlocked(round))return;
+  const fromFailure=round.mode==='failed';progress.hintSeen[level.id]=true;round.usedHint=true;save();
+  const hints=level.hints||['Watch which rule changes the route to the memory.'];
+  const n=Math.min(hintIndex,hints.length-1);
+  show(`${heading(`ASSISTANCE / ${pad(n+1)}`, 'A small nudge.')}<p class="modal-description">Unlocked after four failed attempts. Take one clue at a time.</p><div class="hint-text">${esc(hints[n])}</div><div class="modal-buttons"><button class="primary-button" data-ui="${fromFailure?'retry':'resume'}">${fromFailure?'Try this approach':'Return to puzzle'} ↗</button>${n<hints.length-1?'<button class="secondary-button" data-ui="more-hint">Another clue</button>':''}</div>`,'hint');
+}
+function win(){
+  round.mode='won';const elapsed=round.limit-round.remaining,assisted=!!progress.hintSeen[level.id];
+  const stars=!assisted&&round.failures===0&&elapsed<=round.limit*.6?3:!assisted&&round.failures<=2?2:1;
+  const best=progress.completed[level.id];progress.completed[level.id]={stars:Math.max(stars,best?.stars||0),bestMs:Math.min(elapsed,best?.bestMs??Infinity),steps:state.steps};
+  progress.unlocked=Math.max(progress.unlocked,Math.min(index+1,LEVELS.length-1));progress.current=Math.min(index+1,LEVELS.length-1);save();beep('win');
+  show(`${heading(`SECTOR ${pad(index+1)} / RECOVERED`,index===LEVELS.length-1?'The system remembers.':'A crack in the system.')}<div class="stars" aria-label="${stars} of 3 stars">${'★'.repeat(stars)}<span class="muted">${'☆'.repeat(3-stars)}</span></div><div class="memory-card"><small>MEMORY FRAGMENT ${pad(index+1)} / ${pad(LEVELS.length)}</small>${esc(level.memory)}</div><div class="stats-grid"><div class="stat-card"><strong>${timeText(elapsed)}</strong><span>ACTIVE TIME</span></div><div class="stat-card"><strong>${state.steps}</strong><span>MOVES</span></div><div class="stat-card"><strong>${state.edits}</strong><span>LOGIC EDITS</span></div></div><button class="primary-button modal-primary" data-ui="${index===LEVELS.length-1?'ending':'next'}">${index===LEVELS.length-1?'Open the final file':'Next sector'} <span>↗</span></button><p class="modal-footnote">${assisted?'Completed with assistance.':'Stars reward speed and fewer retries.'} Your best result is saved on this device.</p>`,'success');
+}
+function pause(){
+  if(modal.open)return;
+  if(round.mode!=='playing')return;
+  show(`${heading('SIMULATION PAUSED','Take a breath.')}<p class="modal-description">Your timer is paused. The system can wait.</p><button class="primary-button modal-primary" data-ui="resume">Continue <span>↗</span></button><div class="play-options"><button class="secondary-button" data-ui="review">Briefing</button><button class="secondary-button" data-ui="archive">Level archive</button></div>`,'pause');
+}
+function archive(){
+  show(`${heading('RECOVERED SECTORS','The memory archive.')}<p class="modal-description">Replay an unlocked sector or reread what you recovered. Starting a sector restores its puzzle.</p><div class="archive-grid">${LEVELS.map((l,i)=>`<button class="archive-level" data-level="${i}" ${i>progress.unlocked?'disabled':''}><strong>${pad(i+1)}</strong><span>${esc(l.title)}</span><small>${progress.completed[l.id]?'★'.repeat(progress.completed[l.id].stars):i<=progress.unlocked?'AVAILABLE':'LOCKED'}</small></button>`).join('')}</div>${Object.keys(progress.completed).length?`<details><summary class="text-button">Recovered memories</summary><ol class="archive-stories">${LEVELS.filter(l=>progress.completed[l.id]).map(l=>`<li>${esc(l.memory)}</li>`).join('')}</ol></details>`:''}<button class="secondary-button" data-ui="archive-back">Back to current sector</button>`,'archive');
+}
+function finalChoice(){
+  show(`${heading('AETHER / ROOT FILE','A person, not a process.')}<p class="modal-description">The hidden signature belongs to Dr. Vance. AETHER has been deleting every path back to the outside. You have recovered enough of the truth to choose what survives.</p><div class="modal-buttons"><button class="primary-button" data-ending="restore">Restore Vance ↗</button><button class="secondary-button" data-ending="expose">Expose AETHER ↗</button></div>`,'ending');
+}
+function ending(choice){
+  progress.ending=choice;save();const restore=choice==='restore';
+  show(`${heading('TRANSMISSION COMPLETE',restore?'A voice comes home.':'The truth gets out.')}<p class="modal-description">${restore?'You rebuild the neural signature. For the first time, Utility_Bot_404 speaks without a system prompt: “My name is Vance. Thank you for remembering.”':'You broadcast the archive. AETHER can hide the evidence inside a machine, but it cannot erase every copy. The first reply arrives: “We know. We are coming.”'}</p><div class="memory-card"><small>THE LAST LINE OF CODE</small>identity = remembered;</div><button class="primary-button modal-primary" data-ui="archive">Explore your archive <span>↗</span></button><p class="modal-footnote">12 sectors. One recovered identity. Replay for better times and stars.</p>`,'ending-complete');
+}
+$('modal-content').addEventListener('click',e=>{
+  const button=e.target.closest('button');if(!button)return;
+  const action=button.dataset.ui;
+  if(button.dataset.level!==undefined){close(false);loadLevel(+button.dataset.level);return;}
+  if(button.dataset.ending){ending(button.dataset.ending);return;}
+  if(action==='start'){close(false);round.mode='playing';updateHUD();lastFrame=performance.now();}
+  if(action==='resume'){close(true);if(round.mode==='paused'){round.mode='playing';updateHUD();}}
+  if(action==='retry')retry();
+  if(action==='hint')showHint();
+  if(action==='more-hint'){hintIndex++;showHint();}
+  if(action==='next'){close(false);loadLevel(index+1);}
+  if(action==='archive')archive();
+  if(action==='archive-back'){if(state.status==='dead')showFailure(state.reason||'Time ran out before the recovery was complete.');else if(state.status==='won'){if(index===LEVELS.length-1)finalChoice();else{close(false);loadLevel(index);}}else if(round.mode==='briefing')brief();else{close(false);round.mode='playing';updateHUD();}}
+  if(action==='review')brief(true);
+  if(action==='ending')finalChoice();
 });
+modal.addEventListener('cancel',e=>{e.preventDefault();if(round.mode==='failed'){showFailure(state.reason||'Time ran out before the recovery was complete.');return;}if(['pause','briefing-review','hint','archive'].includes(modalKind)&&state.status==='playing'){close(true);if(round.mode==='paused')round.mode='playing';updateHUD();}});
+$('rule-controls').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(b)apply({type:b.dataset.action,index:+b.dataset.index});});
+$('pipeline').addEventListener('click',e=>{const b=e.target.closest('[data-swap]');if(b){const a=+b.dataset.swap;apply({type:'swap',a,b:a===0?1:a-1});}});
+$('retry-button').addEventListener('click',()=>{if(round.mode==='playing')retry();});
+$('briefing-button').addEventListener('click',()=>{if(round.mode==='playing')brief(true);});
+$('hint-button').addEventListener('click',showHint);
+$('archive-button').addEventListener('click',archive);
+$('pause-button').addEventListener('click',pause);
+$('sound-button').addEventListener('click',()=>{progress.sound=!progress.sound;save();updateSound();beep('edit');});
+function updateSound(){$('sound-button').setAttribute('aria-pressed',String(progress.sound));$('sound-button').setAttribute('aria-label',`Turn sound ${progress.sound?'off':'on'}`);$('sound-button').title=`Turn sound ${progress.sound?'off':'on'}`;$('sound-button').querySelector('span').hidden=progress.sound;}
+const moves={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
+function move(direction){const [dx,dy]=moves[direction];apply({type:'move',dx,dy});}
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!modal.open){pause();return;}
+  if(modal.open||round.mode!=='playing'||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
+  const d={ArrowUp:'up',w:'up',W:'up',ArrowRight:'right',d:'right',D:'right',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left'}[e.key];
+  if(d){e.preventDefault();if(!e.repeat||performance.now()-lastKey>110){move(d);lastKey=performance.now();}}
+});
+let lastKey=0;
+for(const b of document.querySelectorAll('[data-move]')){
+  b.addEventListener('pointerdown',e=>{e.preventDefault();stopHeld();b.setPointerCapture(e.pointerId);move(b.dataset.move);heldDelay=setTimeout(()=>{moveHeld=setInterval(()=>move(b.dataset.move),150);},300);});
+  b.addEventListener('pointerup',stopHeld);b.addEventListener('pointercancel',stopHeld);b.addEventListener('lostpointercapture',stopHeld);
+  // Keyboard and assistive activation without duplicating pointerdown.
+  b.addEventListener('click',e=>{if(e.detail===0)move(b.dataset.move);});
+}
+let swipe=null;
+canvas.addEventListener('pointerdown',e=>{if(round.mode!=='playing')return;swipe={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointerup',e=>{
+  if(!swipe||round.mode!=='playing'){swipe=null;return;}
+  const dx=e.clientX-swipe.x,dy=e.clientY-swipe.y;swipe=null;
+  if(Math.max(Math.abs(dx),Math.abs(dy))>18){move(Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up');return;}
+  const r=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*level.width),y=Math.floor((e.clientY-r.top)/r.height*level.height);
+  const mi=state.mirrors.findIndex(m=>m.x===x&&m.y===y);
+  if(mi>=0){apply({type:'rotate',index:mi});return;}
+  const mx=x-state.x,my=y-state.y;if(Math.abs(mx)+Math.abs(my)===1)apply({type:'move',dx:mx,dy:my});
+});
+canvas.addEventListener('pointercancel',()=>swipe=null);
+document.addEventListener('visibilitychange',()=>{stopHeld();if(document.hidden&&round.mode==='playing')pause();lastFrame=performance.now();});
+window.addEventListener('blur',()=>{stopHeld();if(round.mode==='playing')pause();});
+function resize(){const dpr=Math.min(devicePixelRatio||1,2),width=Math.max(1,canvas.getBoundingClientRect().width);canvas.width=Math.round(width*dpr);canvas.height=canvas.width;paint(performance.now());}
+function paint(now){if(!state)return;const k=canvas.width/600;ctx.setTransform(k,0,0,k,0,0);drawBoard(ctx,level,state,{size:600,time:now,reduced,position});}
+function frame(now){
+  const dt=lastFrame?Math.max(0,now-lastFrame):0;lastFrame=now;
+  if(round.mode==='playing'&&!document.hidden){const was=round.mode;round=tick(round,dt);if(was==='playing'&&round.mode==='failed'){recordFailure();beep('fail');showFailure('Time ran out before the recovery was complete. Every retry gives you the full timer.');}}
+  if(reduced||state.status==='dead'){position.x=state.x;position.y=state.y;}else{const ease=1-Math.exp(-Math.min(dt,100)/45);position.x+=(state.x-position.x)*ease;position.y+=(state.y-position.y)*ease;}
+  if(now-lastPaint>32){paint(now);lastPaint=now;}
+  if(now-lastHUD>120){updateHUD();lastHUD=now;}
+  requestAnimationFrame(frame);
+}
+window.addEventListener('resize',resize);new ResizeObserver(resize).observe($('board-frame'));
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('install-button').hidden=false;});
+$('install-button').addEventListener('click',async()=>{if(!installPrompt)return;await installPrompt.prompt();installPrompt=null;$('install-button').hidden=true;});
+window.addEventListener('appinstalled',()=>{$('install-button').hidden=true;toast('NULL//POINTER is installed.');});
+$('quick-guide').addEventListener('click',e=>{e.preventDefault();if(round.mode==='playing')brief(true);});
+updateSound();loadLevel(index);resize();requestAnimationFrame(frame);
+if(!persistent)toast('Device storage is unavailable. Progress will last for this session.');
 
-// Start Game
-loadLevel(0);
-</script>
-</body>
-</html>
+</script></body></html>
